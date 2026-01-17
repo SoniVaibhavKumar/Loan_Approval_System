@@ -2,109 +2,86 @@ import streamlit as st
 import pickle
 import pandas as pd
 
-# Load trained ML pipeline
+# ---------------- LOAD PIPELINE ----------------
 pipeline = pickle.load(open("loan_pipeline.pkl", "rb"))
+FEATURES = list(pipeline.feature_names_in_)
 
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
     page_title="Loan Approval Prediction",
-    layout="centered"
+    layout="wide"
 )
+
+# ---------------- THEME TOGGLE ----------------
+with st.sidebar:
+    st.title("⚙️ Settings")
+    theme = st.radio("Theme", ["Light", "Dark"])
+
+if theme == "Dark":
+    st.markdown(
+        """
+        <style>
+        body { background-color: #0e1117; color: white; }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 # ---------------- HEADER ----------------
 st.title("🏦 Loan Approval Prediction System")
 st.write(
-    "This application predicts whether a loan is likely to be **Approved or Rejected** "
-    "based on applicant information."
+    "A machine learning–powered system to predict whether a loan will be **Approved or Rejected**."
 )
-
 st.divider()
 
-# ---------------- HELPERS ----------------
-def yes_no(label, help_text=""):
-    return 1 if st.selectbox(label, ["No", "Yes"], help=help_text) == "Yes" else 0
-
-# ---------------- SECTION 1 ----------------
-st.subheader("👤 Personal Information")
+# ---------------- INPUT SECTIONS ----------------
+st.subheader("👤 Applicant Details")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    gender = yes_no("Male", "Select Yes for Male, No for Female")
-    married = yes_no("Married", "Applicant marital status")
-    education = yes_no("Graduate", "Yes if applicant is a graduate")
+    gender = st.selectbox("Gender", ["Male", "Female"])
+    married = st.selectbox("Married", ["Yes", "No"])
+    dependents = st.selectbox("Dependents", [0, 1, 2, 3])
+    education = st.selectbox("Education", ["Graduate", "Not Graduate"])
 
 with col2:
-    dependents = st.selectbox(
-        "Number of Dependents",
-        [0, 1, 2, 3],
-        help="Number of dependents supported by the applicant"
-    )
-    self_employed = yes_no(
-        "Self Employed",
-        "Is the applicant self-employed?"
-    )
+    self_employed = st.selectbox("Self Employed", ["Yes", "No"])
+    credit_history = st.selectbox("Credit History", ["Good", "Bad"])
+    loan_term = st.selectbox("Loan Term (Months)", [120, 180, 240, 300, 360])
 
-st.divider()
-
-# ---------------- SECTION 2 ----------------
-st.subheader("💰 Financial Information")
+st.subheader("💰 Financial Details")
 
 col3, col4 = st.columns(2)
 
 with col3:
-    applicant_income = st.slider(
-        "Applicant Monthly Income",
-        min_value=0,
-        max_value=100000,
-        value=5000,
-        step=500
-    )
-
-    loan_amount = st.slider(
-        "Loan Amount Requested",
-        min_value=0,
-        max_value=500000,
-        value=100000,
-        step=5000
-    )
+    applicant_income = st.slider("Applicant Income", 0, 100000, 5000, step=500)
+    coapplicant_income = st.slider("Co-applicant Income", 0, 100000, 0, step=500)
 
 with col4:
-    coapplicant_income = st.slider(
-        "Co-Applicant Monthly Income",
-        min_value=0,
-        max_value=100000,
-        value=0,
-        step=500
-    )
-
-    loan_term = st.selectbox(
-        "Loan Term (Months)",
-        [120, 180, 240, 300, 360],
-        index=4
-    )
-
-credit_history = yes_no(
-    "Good Credit History",
-    "Yes if applicant has good credit repayment history"
-)
+    loan_amount = st.slider("Loan Amount", 0, 500000, 100000, step=5000)
 
 st.divider()
 
-# ---------------- INPUT DATAFRAME ----------------
-input_data = {
-    "Gender": gender,
-    "Married": married,
+# ---------------- BUILD SAFE INPUT ----------------
+# Start with ALL features set to 0
+input_dict = {feature: 0 for feature in FEATURES}
+
+# Overwrite known features (must match training column names)
+input_dict.update({
+    "Gender": 1 if gender == "Male" else 0,
+    "Married": 1 if married == "Yes" else 0,
     "Dependents": dependents,
-    "Education": education,
-    "Self_Employed": self_employed,
+    "Education": 1 if education == "Graduate" else 0,
+    "Self_Employed": 1 if self_employed == "Yes" else 0,
     "ApplicantIncome": applicant_income,
     "CoapplicantIncome": coapplicant_income,
     "LoanAmount": loan_amount,
     "Loan_Amount_Term": loan_term,
-    "Credit_History": credit_history
-}
+    "Credit_History": 1 if credit_history == "Good" else 0
+})
 
-input_df = pd.DataFrame([input_data])
+input_df = pd.DataFrame([input_dict])
 
 # ---------------- PREDICTION ----------------
 if st.button("🔍 Predict Loan Status"):
