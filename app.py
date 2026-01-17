@@ -1,24 +1,23 @@
 import streamlit as st
 import pickle
-import numpy as np
+import pandas as pd
 
-# Load model
-model = pickle.load(open("loan_model.pkl", "rb"))
+# Load trained pipeline
+pipeline = pickle.load(open("loan_pipeline.pkl", "rb"))
 
 st.set_page_config(page_title="Loan Approval Predictor")
-
 st.title("🏦 Loan Approval Prediction System")
-
 st.write("Enter applicant details to predict loan approval")
 
-loan_amount = st.number_input("Loan Amount")
-income = st.number_input("Applicant Income")
-credit_score = st.number_input("Credit Score")
-loan_term = st.number_input("Loan Term (months)")
+# Collect user input dynamically
+input_data = {}
+
+for feature in pipeline.feature_names_in_:
+    input_data[feature] = st.number_input(f"{feature}")
 
 if st.button("Predict"):
-    input_data = np.array([[loan_amount, income, credit_score, loan_term]])
-    prediction = model.predict(input_data)
+    input_df = pd.DataFrame([input_data])
+    prediction = pipeline.predict(input_df)
 
     if prediction[0] == 1:
         st.success("✅ Loan Approved")
