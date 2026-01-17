@@ -2,111 +2,129 @@ import streamlit as st
 import pickle
 import pandas as pd
 
-# ---------------- LOAD PIPELINE ----------------
+# ================= LOAD MODEL =================
 pipeline = pickle.load(open("loan_pipeline.pkl", "rb"))
 FEATURES = list(pipeline.feature_names_in_)
 
-# ---------------- PAGE CONFIG ----------------
+# ================= PAGE CONFIG =================
 st.set_page_config(
-    page_title="Loan Approval Prediction",
-    layout="wide"
+    page_title="Loan Approval System",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# ---------------- THEME TOGGLE (REAL FIX) ----------------
+# ================= THEME =================
 with st.sidebar:
     st.title("⚙️ Settings")
-    theme = st.radio("Theme Mode", ["Light", "Dark"])
+    theme = st.radio("Theme", ["Light", "Dark"])
 
 if theme == "Dark":
     st.markdown("""
         <style>
-        body, .stApp {
-            background-color: #0e1117;
-            color: #fafafa;
+        .stApp {
+            background-color: #0b0f19;
+            color: #ffffff;
         }
         div[data-testid="stSidebar"] {
-            background-color: #161b22;
+            background-color: #111827;
         }
-        label, span, p, h1, h2, h3 {
-            color: #fafafa !important;
+        label, p, h1, h2, h3, span {
+            color: #ffffff !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-# ---------------- HEADER ----------------
+# ================= HEADER =================
 st.markdown("## 🏦 Loan Approval Prediction System")
 st.markdown(
-    "A **machine learning–powered system** that predicts whether a loan will be "
-    "**Approved or Rejected** based on applicant details."
+    "An **AI-powered financial decision system** that evaluates loan eligibility "
+    "based on applicant profile, income stability, and credit behavior."
 )
 st.divider()
 
-# ---------------- INPUT CARD ----------------
+# ================= APPLICANT PROFILE =================
 st.markdown("### 👤 Applicant Profile")
 
-col1, col2, col3 = st.columns(3)
+c1, c2, c3, c4 = st.columns(4)
 
-with col1:
+with c1:
     gender = st.selectbox("Gender", ["Male", "Female"])
-    married = st.selectbox("Married", ["Yes", "No"])
-    dependents = st.selectbox("Dependents", [0, 1, 2, 3])
+    age = st.slider("Age", 18, 65, 30)
 
-with col2:
-    education = st.selectbox("Education", ["Graduate", "Not Graduate"])
-    self_employed = st.selectbox("Self Employed", ["Yes", "No"])
+with c2:
+    married = st.selectbox("Marital Status", ["Married", "Single"])
+    dependents = st.selectbox("Dependents", [0, 1, 2, 3, 4])
+
+with c3:
+    education = st.selectbox("Education Level", ["Graduate", "Not Graduate"])
+    employment_type = st.selectbox("Employment Type", ["Salaried", "Self Employed"])
+
+with c4:
+    residence_type = st.selectbox("Residence Type", ["Owned", "Rented", "Company Provided"])
+    years_at_job = st.slider("Years at Current Job", 0, 40, 5)
+
+st.divider()
+
+# ================= FINANCIAL DETAILS =================
+st.markdown("### 💰 Financial Details")
+
+c5, c6, c7, c8 = st.columns(4)
+
+with c5:
+    applicant_income = st.slider("Applicant Monthly Income", 0, 200000, 5000, step=500)
+    savings = st.slider("Savings Balance", 0, 1000000, 50000, step=10000)
+
+with c6:
+    coapplicant_income = st.slider("Co-Applicant Income", 0, 200000, 0, step=500)
+    existing_loans = st.slider("Existing Loans (Count)", 0, 5, 0)
+
+with c7:
+    loan_amount = st.slider("Loan Amount Requested", 0, 1000000, 100000, step=10000)
+    loan_term = st.selectbox("Loan Term (Months)", [120, 180, 240, 300, 360])
+
+with c8:
+    credit_score = st.slider("Credit Score", 300, 900, 700)
     credit_history = st.selectbox("Credit History", ["Good", "Bad"])
 
-with col3:
-    credit_score = st.slider(
-        "Credit Score",
-        min_value=300,
-        max_value=900,
-        value=700,
-        help="Higher credit score improves approval chances"
+st.divider()
+
+# ================= ADDITIONAL RISK SIGNALS =================
+st.markdown("### 📊 Additional Risk Indicators")
+
+c9, c10, c11, c12 = st.columns(4)
+
+with c9:
+    property_owned = st.selectbox("Property Owned", ["Yes", "No"])
+    vehicle_owned = st.selectbox("Vehicle Owned", ["Yes", "No"])
+
+with c10:
+    monthly_expenses = st.slider("Monthly Expenses", 0, 150000, 3000, step=500)
+    dependents_income = st.selectbox("Dependents with Income", ["Yes", "No"])
+
+with c11:
+    loan_purpose = st.selectbox(
+        "Loan Purpose",
+        ["Home", "Education", "Business", "Personal", "Vehicle"]
     )
-    loan_term = st.selectbox(
-        "Loan Term (Months)",
-        [120, 180, 240, 300, 360]
-    )
+    employment_stability = st.selectbox("Employment Stability", ["High", "Medium", "Low"])
+
+with c12:
+    region_type = st.selectbox("Region Type", ["Urban", "Semi-Urban", "Rural"])
+    bank_relationship = st.slider("Years with Bank", 0, 30, 5)
 
 st.divider()
 
-# ---------------- FINANCIAL DETAILS ----------------
-st.markdown("### 💰 Financial Information")
-
-col4, col5, col6 = st.columns(3)
-
-with col4:
-    applicant_income = st.slider(
-        "Applicant Monthly Income",
-        0, 150000, 5000, step=500
-    )
-
-with col5:
-    coapplicant_income = st.slider(
-        "Co-Applicant Monthly Income",
-        0, 150000, 0, step=500
-    )
-
-with col6:
-    loan_amount = st.slider(
-        "Loan Amount Requested",
-        0, 500000, 100000, step=5000
-    )
-
-st.divider()
-
-# ---------------- SAFE FEATURE BUILD ----------------
-# Start with ALL features = 0
+# ================= SAFE MODEL INPUT =================
+# Start with all features as zero
 input_dict = {feature: 0 for feature in FEATURES}
 
-# Map UI → Model features (must match training)
+# Map only features used by model
 input_dict.update({
     "Gender": 1 if gender == "Male" else 0,
-    "Married": 1 if married == "Yes" else 0,
+    "Married": 1 if married == "Married" else 0,
     "Dependents": dependents,
     "Education": 1 if education == "Graduate" else 0,
-    "Self_Employed": 1 if self_employed == "Yes" else 0,
+    "Self_Employed": 1 if employment_type == "Self Employed" else 0,
     "ApplicantIncome": applicant_income,
     "CoapplicantIncome": coapplicant_income,
     "LoanAmount": loan_amount,
@@ -116,17 +134,17 @@ input_dict.update({
 
 input_df = pd.DataFrame([input_dict])
 
-# ---------------- PREDICTION ----------------
-st.markdown("### 🔮 Prediction")
+# ================= PREDICTION =================
+st.markdown("### 🔮 Loan Decision")
 
-if st.button("🚀 Predict Loan Status", use_container_width=True):
+if st.button("🚀 Predict Loan Approval", use_container_width=True):
     prediction = pipeline.predict(input_df)[0]
     probability = pipeline.predict_proba(input_df)[0][1]
 
     if prediction == 1:
-        st.success(f"✅ **Loan Approved**\n\nConfidence: **{probability:.2%}**")
+        st.success(f"✅ **Loan Approved**  \nConfidence: **{probability:.2%}**")
     else:
-        st.error(f"❌ **Loan Rejected**\n\nConfidence: **{probability:.2%}**")
+        st.error(f"❌ **Loan Rejected**  \nConfidence: **{probability:.2%}**")
 
 st.divider()
 st.caption("Built by Vaibhav Soni")
