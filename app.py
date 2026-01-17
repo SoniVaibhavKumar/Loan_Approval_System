@@ -9,40 +9,72 @@ FEATURES = list(pipeline.feature_names_in_)
 # ================= PAGE CONFIG =================
 st.set_page_config(
     page_title="Loan Approval System",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# ================= THEME =================
-with st.sidebar:
-    st.title("⚙️ Settings")
-    theme = st.radio("Theme", ["Light", "Dark"])
+# ================= CUSTOM CSS (DARK BLUE THEME) =================
+st.markdown("""
+<style>
 
-if theme == "Dark":
-    st.markdown("""
-        <style>
-        .stApp {
-            background-color: #0b0f19;
-            color: #ffffff;
-        }
-        div[data-testid="stSidebar"] {
-            background-color: #111827;
-        }
-        label, p, h1, h2, h3, span {
-            color: #ffffff !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+/* Main background */
+.stApp {
+    background: linear-gradient(135deg, #0f172a, #020617);
+    color: #e5e7eb;
+}
+
+/* Headings */
+h1, h2, h3 {
+    color: #f8fafc;
+    font-weight: 600;
+}
+
+/* Section cards */
+.section-card {
+    background: linear-gradient(135deg, #020617, #020617);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+/* Input labels */
+label {
+    color: #c7d2fe !important;
+    font-weight: 500;
+}
+
+/* Buttons */
+.stButton > button {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: white;
+    border-radius: 14px;
+    padding: 14px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+}
+.stButton > button:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+}
+
+/* Sliders */
+.css-1n76uvr, .css-1pahdxg {
+    color: #60a5fa !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 # ================= HEADER =================
 st.markdown("## 🏦 Loan Approval Prediction System")
 st.markdown(
-    "An **AI-powered financial decision system** that evaluates loan eligibility "
-    "based on applicant profile, income stability, and credit behavior."
+    "A **machine learning–powered financial decision system** designed to evaluate "
+    "loan eligibility using applicant profile, income stability, and credit behavior."
 )
-st.divider()
+st.markdown("---")
 
 # ================= APPLICANT PROFILE =================
+st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown("### 👤 Applicant Profile")
 
 c1, c2, c3, c4 = st.columns(4)
@@ -63,9 +95,10 @@ with c4:
     residence_type = st.selectbox("Residence Type", ["Owned", "Rented", "Company Provided"])
     years_at_job = st.slider("Years at Current Job", 0, 40, 5)
 
-st.divider()
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ================= FINANCIAL DETAILS =================
+st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown("### 💰 Financial Details")
 
 c5, c6, c7, c8 = st.columns(4)
@@ -86,9 +119,10 @@ with c8:
     credit_score = st.slider("Credit Score", 300, 900, 700)
     credit_history = st.selectbox("Credit History", ["Good", "Bad"])
 
-st.divider()
+st.markdown("</div>", unsafe_allow_html=True)
 
-# ================= ADDITIONAL RISK SIGNALS =================
+# ================= ADDITIONAL RISK =================
+st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown("### 📊 Additional Risk Indicators")
 
 c9, c10, c11, c12 = st.columns(4)
@@ -102,23 +136,17 @@ with c10:
     dependents_income = st.selectbox("Dependents with Income", ["Yes", "No"])
 
 with c11:
-    loan_purpose = st.selectbox(
-        "Loan Purpose",
-        ["Home", "Education", "Business", "Personal", "Vehicle"]
-    )
+    loan_purpose = st.selectbox("Loan Purpose", ["Home", "Education", "Business", "Personal", "Vehicle"])
     employment_stability = st.selectbox("Employment Stability", ["High", "Medium", "Low"])
 
 with c12:
     region_type = st.selectbox("Region Type", ["Urban", "Semi-Urban", "Rural"])
     bank_relationship = st.slider("Years with Bank", 0, 30, 5)
 
-st.divider()
+st.markdown("</div>", unsafe_allow_html=True)
 
-# ================= SAFE MODEL INPUT =================
-# Start with all features as zero
+# ================= MODEL INPUT =================
 input_dict = {feature: 0 for feature in FEATURES}
-
-# Map only features used by model
 input_dict.update({
     "Gender": 1 if gender == "Male" else 0,
     "Married": 1 if married == "Married" else 0,
@@ -135,6 +163,7 @@ input_dict.update({
 input_df = pd.DataFrame([input_dict])
 
 # ================= PREDICTION =================
+st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown("### 🔮 Loan Decision")
 
 if st.button("🚀 Predict Loan Approval", use_container_width=True):
@@ -146,5 +175,6 @@ if st.button("🚀 Predict Loan Approval", use_container_width=True):
     else:
         st.error(f"❌ **Loan Rejected**  \nConfidence: **{probability:.2%}**")
 
-st.divider()
+st.markdown("</div>", unsafe_allow_html=True)
+
 st.caption("Built by Vaibhav Soni")
