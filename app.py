@@ -12,62 +12,95 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------------- THEME TOGGLE ----------------
+# ---------------- THEME TOGGLE (REAL FIX) ----------------
 with st.sidebar:
     st.title("⚙️ Settings")
-    theme = st.radio("Theme", ["Light", "Dark"])
+    theme = st.radio("Theme Mode", ["Light", "Dark"])
 
 if theme == "Dark":
-    st.markdown(
-        """
+    st.markdown("""
         <style>
-        body { background-color: #0e1117; color: white; }
+        body, .stApp {
+            background-color: #0e1117;
+            color: #fafafa;
+        }
+        div[data-testid="stSidebar"] {
+            background-color: #161b22;
+        }
+        label, span, p, h1, h2, h3 {
+            color: #fafafa !important;
+        }
         </style>
-        """,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
 
 # ---------------- HEADER ----------------
-st.title("🏦 Loan Approval Prediction System")
-st.write(
-    "A machine learning–powered system to predict whether a loan will be **Approved or Rejected**."
+st.markdown("## 🏦 Loan Approval Prediction System")
+st.markdown(
+    "A **machine learning–powered system** that predicts whether a loan will be "
+    "**Approved or Rejected** based on applicant details."
 )
 st.divider()
 
-# ---------------- INPUT SECTIONS ----------------
-st.subheader("👤 Applicant Details")
+# ---------------- INPUT CARD ----------------
+st.markdown("### 👤 Applicant Profile")
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     gender = st.selectbox("Gender", ["Male", "Female"])
     married = st.selectbox("Married", ["Yes", "No"])
     dependents = st.selectbox("Dependents", [0, 1, 2, 3])
-    education = st.selectbox("Education", ["Graduate", "Not Graduate"])
 
 with col2:
+    education = st.selectbox("Education", ["Graduate", "Not Graduate"])
     self_employed = st.selectbox("Self Employed", ["Yes", "No"])
     credit_history = st.selectbox("Credit History", ["Good", "Bad"])
-    loan_term = st.selectbox("Loan Term (Months)", [120, 180, 240, 300, 360])
-
-st.subheader("💰 Financial Details")
-
-col3, col4 = st.columns(2)
 
 with col3:
-    applicant_income = st.slider("Applicant Income", 0, 100000, 5000, step=500)
-    coapplicant_income = st.slider("Co-applicant Income", 0, 100000, 0, step=500)
-
-with col4:
-    loan_amount = st.slider("Loan Amount", 0, 500000, 100000, step=5000)
+    credit_score = st.slider(
+        "Credit Score",
+        min_value=300,
+        max_value=900,
+        value=700,
+        help="Higher credit score improves approval chances"
+    )
+    loan_term = st.selectbox(
+        "Loan Term (Months)",
+        [120, 180, 240, 300, 360]
+    )
 
 st.divider()
 
-# ---------------- BUILD SAFE INPUT ----------------
-# Start with ALL features set to 0
+# ---------------- FINANCIAL DETAILS ----------------
+st.markdown("### 💰 Financial Information")
+
+col4, col5, col6 = st.columns(3)
+
+with col4:
+    applicant_income = st.slider(
+        "Applicant Monthly Income",
+        0, 150000, 5000, step=500
+    )
+
+with col5:
+    coapplicant_income = st.slider(
+        "Co-Applicant Monthly Income",
+        0, 150000, 0, step=500
+    )
+
+with col6:
+    loan_amount = st.slider(
+        "Loan Amount Requested",
+        0, 500000, 100000, step=5000
+    )
+
+st.divider()
+
+# ---------------- SAFE FEATURE BUILD ----------------
+# Start with ALL features = 0
 input_dict = {feature: 0 for feature in FEATURES}
 
-# Overwrite known features (must match training column names)
+# Map UI → Model features (must match training)
 input_dict.update({
     "Gender": 1 if gender == "Male" else 0,
     "Married": 1 if married == "Yes" else 0,
@@ -84,16 +117,16 @@ input_dict.update({
 input_df = pd.DataFrame([input_dict])
 
 # ---------------- PREDICTION ----------------
-if st.button("🔍 Predict Loan Status"):
+st.markdown("### 🔮 Prediction")
+
+if st.button("🚀 Predict Loan Status", use_container_width=True):
     prediction = pipeline.predict(input_df)[0]
     probability = pipeline.predict_proba(input_df)[0][1]
-
-    st.divider()
 
     if prediction == 1:
         st.success(f"✅ **Loan Approved**\n\nConfidence: **{probability:.2%}**")
     else:
         st.error(f"❌ **Loan Rejected**\n\nConfidence: **{probability:.2%}**")
 
-# ---------------- FOOTER ----------------
+st.divider()
 st.caption("Built by Vaibhav Soni")
