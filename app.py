@@ -1,106 +1,77 @@
 import streamlit as st
 import pickle
 import pandas as pd
+import numpy as np
 
 # ================= PAGE CONFIG =================
 st.set_page_config(
-    page_title="AI Loan Approval System",
+    page_title="Loan AI System",
     page_icon="🏦",
     layout="wide"
 )
 
 # ================= LOAD MODEL =================
-pipeline = pickle.load(open("loan_pipeline.pkl", "rb"))
-FEATURES = list(pipeline.feature_names_in_)
+with open("loan_pipeline.pkl", "rb") as f:
+    pipeline = pickle.load(f)
 
-# ================= SESSION STATE =================
-if "theme" not in st.session_state:
-    st.session_state.theme = "Dark"
+FEATURES = list(pipeline.feature_names_in_)
 
 # ================= SIDEBAR =================
 with st.sidebar:
     st.markdown("## 🏦 Loan AI System")
     st.caption("Enterprise Credit Decision Engine")
 
-    if st.toggle("☀️ Light Mode"):
-        st.session_state.theme = "Light"
-    else:
-        st.session_state.theme = "Dark"
+    theme = st.toggle("☀️ Light Mode", value=True)
 
     st.divider()
-
     st.markdown("### 📊 Model Info")
-    st.write("• Algorithm: ML Pipeline")
-    st.write("• Encoding: Auto")
+    st.write("• Algorithm: sklearn Pipeline")
+    st.write("• Features:", len(FEATURES))
     st.write("• Deployment: Streamlit Cloud")
 
     st.divider()
-
-    st.markdown("### 🔐 Risk Factors Used")
-    st.write("✔ Income Stability")
+    st.markdown("### 🔍 Risk Factors")
+    st.write("✔ Income")
     st.write("✔ Credit History")
-    st.write("✔ Dependents")
     st.write("✔ Loan Amount")
-    st.write("✔ Loan Term")
+    st.write("✔ Term")
 
-    st.divider()
-    st.caption("Built by Vaibhav Soni")
+# ================= THEME =================
+bg = "#f8fafc" if theme else "#020617"
+card = "#ffffff" if theme else "#020617"
+text = "#020617" if theme else "#e5e7eb"
 
-# ================= THEME COLORS =================
-if st.session_state.theme == "Dark":
-    bg = "#020617"
-    card = "#020617"
-    text = "#e5e7eb"
-    accent = "#2563eb"
-else:
-    bg = "#f8fafc"
-    card = "#ffffff"
-    text = "#020617"
-    accent = "#2563eb"
-
-# ================= CSS =================
 st.markdown(f"""
 <style>
 .stApp {{
     background-color: {bg};
     color: {text};
 }}
-
 .section {{
     background: {card};
-    border-radius: 18px;
     padding: 24px;
+    border-radius: 18px;
     margin-bottom: 24px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-}}
-
-.stButton>button {{
-    background: linear-gradient(135deg, {accent}, #1e40af);
-    color: white;
-    border-radius: 16px;
-    padding: 16px;
-    font-size: 18px;
-    font-weight: 600;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
 }}
 </style>
 """, unsafe_allow_html=True)
 
 # ================= HEADER =================
 st.markdown("## 🏦 AI Loan Approval System")
-st.markdown("Bank-grade machine learning decision platform")
+st.markdown("Robust · Stable · Production-Safe")
 st.divider()
 
-# ================= DASHBOARD METRICS =================
+# ================= METRICS =================
 m1, m2, m3, m4 = st.columns(4)
-
-m1.metric("⚡ Decision Speed", "Instant")
-m2.metric("📊 Risk Level", "Multi-Factor")
+m1.metric("⚡ Speed", "Instant")
+m2.metric("📊 Risk", "Multi-Factor")
 m3.metric("🔐 Security", "Local Model")
-m4.metric("🤖 AI Engine", "sklearn Pipeline")
+m4.metric("🤖 Engine", "sklearn")
 
-# ================= MAIN INPUT =================
+# ================= INPUT UI =================
 st.markdown('<div class="section">', unsafe_allow_html=True)
-st.markdown("### 👤 Applicant Information")
+st.markdown("### 👤 Applicant Inputs")
 
 c1, c2, c3, c4 = st.columns(4)
 
@@ -109,37 +80,39 @@ with c1:
 with c2:
     Married = st.selectbox("Marital Status", ["Married", "Single"])
 with c3:
-    Dependents = st.selectbox("Dependents", ["0", "1", "2", "3"])
-with c4:
     Education = st.selectbox("Education", ["Graduate", "Not Graduate"])
+with c4:
+    Dependents = st.selectbox("Dependents", ["0", "1", "2", "3"])
 
 c5, c6, c7, c8 = st.columns(4)
 
 with c5:
-    Self_Employed = st.selectbox("Employment", ["No", "Yes"])
+    ApplicantIncome = st.number_input("Applicant Income", 0, 200000, 5000)
 with c6:
-    ApplicantIncome = st.number_input("Applicant Income", min_value=0, value=5000)
+    CoapplicantIncome = st.number_input("Co-Applicant Income", 0, 200000, 0)
 with c7:
-    CoapplicantIncome = st.number_input("Co-Applicant Income", min_value=0, value=0)
+    LoanAmount = st.number_input("Loan Amount", 0, 1000000, 100)
 with c8:
-    LoanAmount = st.number_input("Loan Amount", min_value=0, value=100)
+    Loan_Amount_Term = st.selectbox("Loan Term", [120, 180, 240, 300, 360])
 
-c9, c10 = st.columns(2)
-
-with c9:
-    Loan_Amount_Term = st.selectbox("Loan Term (Months)", [120, 180, 240, 300, 360])
-with c10:
-    Credit_History = st.selectbox("Credit History", ["Good", "Bad"])
+Credit_History = st.selectbox("Credit History", ["Good", "Bad"])
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# ================= MODEL INPUT (RAW VALUES) =================
-input_data = {
+# ================= MAGIC FIX =================
+# Create dataframe with EXACT training features
+input_df = pd.DataFrame(
+    np.nan,
+    index=[0],
+    columns=FEATURES
+)
+
+# Fill only what we KNOW
+safe_values = {
     "Gender": Gender,
     "Married": Married,
-    "Dependents": Dependents,
     "Education": Education,
-    "Self_Employed": Self_Employed,
+    "Dependents": Dependents,
     "ApplicantIncome": ApplicantIncome,
     "CoapplicantIncome": CoapplicantIncome,
     "LoanAmount": LoanAmount,
@@ -147,21 +120,23 @@ input_data = {
     "Credit_History": 1 if Credit_History == "Good" else 0
 }
 
-df = pd.DataFrame([input_data])
+for col, val in safe_values.items():
+    if col in input_df.columns:
+        input_df[col] = val
 
 # ================= PREDICTION =================
 st.markdown('<div class="section">', unsafe_allow_html=True)
 st.markdown("### 🔮 Loan Decision")
 
 if st.button("🚀 Predict Loan Approval", use_container_width=True):
-    prediction = pipeline.predict(df)[0]
-    probability = pipeline.predict_proba(df)[0][1]
+    pred = pipeline.predict(input_df)[0]
+    prob = pipeline.predict_proba(input_df)[0][1]
 
-    st.progress(probability)
+    st.progress(prob)
 
-    if prediction == 1:
-        st.success(f"✅ Loan Approved\n\nConfidence: {probability:.2%}")
+    if pred == 1:
+        st.success(f"✅ Loan Approved\n\nConfidence: {prob:.2%}")
     else:
-        st.error(f"❌ Loan Rejected\n\nConfidence: {probability:.2%}")
+        st.error(f"❌ Loan Rejected\n\nConfidence: {prob:.2%}")
 
 st.markdown("</div>", unsafe_allow_html=True)
