@@ -2,79 +2,106 @@ import streamlit as st
 import pickle
 import pandas as pd
 
-# ================= LOAD MODEL =================
+# ================== PAGE CONFIG ==================
+st.set_page_config(
+    page_title="AI Loan Approval System",
+    page_icon="🏦",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# ================== LOAD MODEL ==================
 pipeline = pickle.load(open("loan_pipeline.pkl", "rb"))
 FEATURES = list(pipeline.feature_names_in_)
 
-# ================= PAGE CONFIG =================
-st.set_page_config(
-    page_title="Loan Approval System",
-    layout="wide"
+# ================== THEME TOGGLE ==================
+theme = st.sidebar.radio(
+    "🎨 Theme Mode",
+    ["Dark Mode 🌙", "Light Mode ☀️"],
+    index=0
 )
 
-# ================= CUSTOM CSS (DARK BLUE THEME) =================
-st.markdown("""
+# ================== DYNAMIC CSS ==================
+if "Dark" in theme:
+    bg = "#020617"
+    card = "#020617"
+    text = "#e5e7eb"
+    accent = "#2563eb"
+    sub = "#94a3b8"
+else:
+    bg = "#f8fafc"
+    card = "#ffffff"
+    text = "#0f172a"
+    accent = "#2563eb"
+    sub = "#475569"
+
+st.markdown(f"""
 <style>
+.stApp {{
+    background: linear-gradient(135deg, {bg}, {bg});
+    color: {text};
+}}
 
-/* Main background */
-.stApp {
-    background: linear-gradient(135deg, #0f172a, #020617);
-    color: #e5e7eb;
-}
+h1, h2, h3 {{
+    color: {text};
+}}
 
-/* Headings */
-h1, h2, h3 {
-    color: #f8fafc;
-    font-weight: 600;
-}
-
-/* Section cards */
-.section-card {
-    background: linear-gradient(135deg, #020617, #020617);
-    border-radius: 16px;
-    padding: 24px;
+.section {{
+    background: {card};
+    border-radius: 18px;
+    padding: 26px;
     margin-bottom: 24px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-}
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}}
 
-/* Input labels */
-label {
-    color: #c7d2fe !important;
-    font-weight: 500;
-}
-
-/* Buttons */
-.stButton > button {
-    background: linear-gradient(135deg, #2563eb, #1e40af);
+.metric {{
+    background: linear-gradient(135deg, {accent}, #1e40af);
     color: white;
-    border-radius: 14px;
-    padding: 14px 24px;
-    font-size: 16px;
+    padding: 20px;
+    border-radius: 18px;
+    text-align: center;
+}}
+
+.stButton>button {{
+    background: linear-gradient(135deg, {accent}, #1e40af);
+    color: white;
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 18px;
     font-weight: 600;
     border: none;
-}
-.stButton > button:hover {
-    background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
-}
+}}
 
-/* Sliders */
-.css-1n76uvr, .css-1pahdxg {
-    color: #60a5fa !important;
-}
+.stButton>button:hover {{
+    transform: scale(1.02);
+}}
 
+label {{
+    color: {sub} !important;
+}}
 </style>
 """, unsafe_allow_html=True)
 
-# ================= HEADER =================
-st.markdown("## 🏦 Loan Approval Prediction System")
+# ================== HEADER ==================
+st.markdown("## 🏦 AI Loan Approval System")
 st.markdown(
-    "A **machine learning–powered financial decision system** designed to evaluate "
-    "loan eligibility using applicant profile, income stability, and credit behavior."
+    "An **enterprise-grade machine learning platform** that evaluates loan eligibility "
+    "using applicant demographics, income stability, and credit behavior."
 )
-st.markdown("---")
+st.divider()
 
-# ================= APPLICANT PROFILE =================
-st.markdown('<div class="section-card">', unsafe_allow_html=True)
+# ================== KPI METRICS ==================
+m1, m2, m3, m4 = st.columns(4)
+
+m1.markdown('<div class="metric"><h3>⚡ AI Model</h3><p>ML Pipeline</p></div>', unsafe_allow_html=True)
+m2.markdown('<div class="metric"><h3>📊 Risk</h3><p>Multi-Factor</p></div>', unsafe_allow_html=True)
+m3.markdown('<div class="metric"><h3>🔒 Secure</h3><p>Local Inference</p></div>', unsafe_allow_html=True)
+m4.markdown('<div class="metric"><h3>🚀 Speed</h3><p>Instant</p></div>', unsafe_allow_html=True)
+
+st.divider()
+
+# ================== APPLICANT PROFILE ==================
+st.markdown('<div class="section">', unsafe_allow_html=True)
 st.markdown("### 👤 Applicant Profile")
 
 c1, c2, c3, c4 = st.columns(4)
@@ -88,31 +115,31 @@ with c2:
     dependents = st.selectbox("Dependents", [0, 1, 2, 3, 4])
 
 with c3:
-    education = st.selectbox("Education Level", ["Graduate", "Not Graduate"])
-    employment_type = st.selectbox("Employment Type", ["Salaried", "Self Employed"])
+    education = st.selectbox("Education", ["Graduate", "Not Graduate"])
+    employment = st.selectbox("Employment", ["Salaried", "Self Employed"])
 
 with c4:
-    residence_type = st.selectbox("Residence Type", ["Owned", "Rented", "Company Provided"])
-    years_at_job = st.slider("Years at Current Job", 0, 40, 5)
+    years_job = st.slider("Years at Current Job", 0, 40, 5)
+    residence = st.selectbox("Residence", ["Owned", "Rented", "Company Provided"])
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# ================= FINANCIAL DETAILS =================
-st.markdown('<div class="section-card">', unsafe_allow_html=True)
-st.markdown("### 💰 Financial Details")
+# ================== FINANCIAL DETAILS ==================
+st.markdown('<div class="section">', unsafe_allow_html=True)
+st.markdown("### 💰 Financial Information")
 
 c5, c6, c7, c8 = st.columns(4)
 
 with c5:
-    applicant_income = st.slider("Applicant Monthly Income", 0, 200000, 5000, step=500)
-    savings = st.slider("Savings Balance", 0, 1000000, 50000, step=10000)
+    income = st.slider("Applicant Income", 0, 200000, 5000, step=500)
+    savings = st.slider("Savings", 0, 1000000, 50000, step=10000)
 
 with c6:
-    coapplicant_income = st.slider("Co-Applicant Income", 0, 200000, 0, step=500)
-    existing_loans = st.slider("Existing Loans (Count)", 0, 5, 0)
+    co_income = st.slider("Co-Applicant Income", 0, 200000, 0, step=500)
+    loans = st.slider("Existing Loans", 0, 5, 0)
 
 with c7:
-    loan_amount = st.slider("Loan Amount Requested", 0, 1000000, 100000, step=10000)
+    loan_amount = st.slider("Loan Amount", 0, 1000000, 100000, step=10000)
     loan_term = st.selectbox("Loan Term (Months)", [120, 180, 240, 300, 360])
 
 with c8:
@@ -121,60 +148,39 @@ with c8:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# ================= ADDITIONAL RISK =================
-st.markdown('<div class="section-card">', unsafe_allow_html=True)
-st.markdown("### 📊 Additional Risk Indicators")
-
-c9, c10, c11, c12 = st.columns(4)
-
-with c9:
-    property_owned = st.selectbox("Property Owned", ["Yes", "No"])
-    vehicle_owned = st.selectbox("Vehicle Owned", ["Yes", "No"])
-
-with c10:
-    monthly_expenses = st.slider("Monthly Expenses", 0, 150000, 3000, step=500)
-    dependents_income = st.selectbox("Dependents with Income", ["Yes", "No"])
-
-with c11:
-    loan_purpose = st.selectbox("Loan Purpose", ["Home", "Education", "Business", "Personal", "Vehicle"])
-    employment_stability = st.selectbox("Employment Stability", ["High", "Medium", "Low"])
-
-with c12:
-    region_type = st.selectbox("Region Type", ["Urban", "Semi-Urban", "Rural"])
-    bank_relationship = st.slider("Years with Bank", 0, 30, 5)
-
-st.markdown("</div>", unsafe_allow_html=True)
-
-# ================= MODEL INPUT =================
-input_dict = {feature: 0 for feature in FEATURES}
-input_dict.update({
+# ================== MODEL INPUT ==================
+input_data = {f: 0 for f in FEATURES}
+input_data.update({
     "Gender": 1 if gender == "Male" else 0,
     "Married": 1 if married == "Married" else 0,
     "Dependents": dependents,
     "Education": 1 if education == "Graduate" else 0,
-    "Self_Employed": 1 if employment_type == "Self Employed" else 0,
-    "ApplicantIncome": applicant_income,
-    "CoapplicantIncome": coapplicant_income,
+    "Self_Employed": 1 if employment == "Self Employed" else 0,
+    "ApplicantIncome": income,
+    "CoapplicantIncome": co_income,
     "LoanAmount": loan_amount,
     "Loan_Amount_Term": loan_term,
     "Credit_History": 1 if credit_history == "Good" else 0
 })
 
-input_df = pd.DataFrame([input_dict])
+df = pd.DataFrame([input_data])
 
-# ================= PREDICTION =================
-st.markdown('<div class="section-card">', unsafe_allow_html=True)
-st.markdown("### 🔮 Loan Decision")
+# ================== PREDICTION ==================
+st.markdown('<div class="section">', unsafe_allow_html=True)
+st.markdown("### 🔮 Loan Decision Engine")
 
 if st.button("🚀 Predict Loan Approval", use_container_width=True):
-    prediction = pipeline.predict(input_df)[0]
-    probability = pipeline.predict_proba(input_df)[0][1]
+    pred = pipeline.predict(df)[0]
+    prob = pipeline.predict_proba(df)[0][1]
 
-    if prediction == 1:
-        st.success(f"✅ **Loan Approved**  \nConfidence: **{probability:.2%}**")
+    st.progress(prob)
+
+    if pred == 1:
+        st.success(f"✅ **Loan Approved**  \nConfidence: **{prob:.2%}**")
     else:
-        st.error(f"❌ **Loan Rejected**  \nConfidence: **{probability:.2%}**")
+        st.error(f"❌ **Loan Rejected**  \nConfidence: **{prob:.2%}**")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-st.caption("Built by Vaibhav Soni")
+# ================== FOOTER ==================
+st.caption("Built with ❤️ by Vaibhav Soni | AI-Powered FinTech System")
